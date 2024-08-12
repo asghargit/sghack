@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+            text-align: center;
+        }
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .quiz-container {
+            display: none;
+            max-width: 600px;
+            background-color: #ebf5dd;
+            padding: 20px;
+            border: 2px solid #07394a;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(160, 13, 13, 0.2);
+            text-align: center;
+        }
+        .question {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #008cba;
+        }
+        .options {
+            list-style: none;
+            padding: 0;
+        }
+        .options li {
+            margin: 10px 0;
+            color: #333;
+        }
+        .options input {
+            margin-right: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        .timer {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: red;
+        }
+        .wow-message {
+            color: green;
+            font-size: 1.5em;
+            animation: fadeIn 1s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+    <script>
+        const webAppUrl = 'https://script.google.com/macros/s/AKfycbxACJnSApIGj6-9Bl1hgSv0Mmcj4k8WUgbhsNe2PWOmVHACyVE12GSg_YYzpsvCWJcv/exec'; // Replace with your Web App URL
+
+        async function register() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            const response = await fetch(webAppUrl, {
+                method: 'POST',
+                body: new URLSearchParams({
+                    action: 'register',
+                    name: name,
+                    email: email,
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+            if (data.status === 'success') {
+                alert('Registration successful! Token: ' + data.token);
+                showQuiz();
+            } else {
+                alert(data.message);
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const response = await fetch(webAppUrl, {
+                method: 'POST',
+                body: new URLSearchParams({
+                    action: 'login',
+                    email: email,
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+            if (data.status === 'success') {
+                alert('Login successful! Token: ' + data.token);
+                showQuiz();
+            } else {
+                alert(data.message);
+            }
+        }
+
+        function switchToRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        }
+
+        function switchToLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+        }
+
+        function showQuiz() {
+            document.querySelector('.container').style.display = 'none';
+            document.querySelector('.quiz-container').style.display = 'block';
+            currentQuiz = quizData.html; // start with HTML quiz
+            startQuiz();
+        }
+
+        const htmlQuiz = [
+            {
+                question: "What does HTML stand for?",
+                options: [
+                    "Hypertext Markup Language",
+                    "Hyper Transfer Markup Language",
+                    "Hyper Text Machine Language",
+                    "HyperLink and Text Markup Language",
+                ],
+                correct: 0,
+            },
+            {
+                question: "Which statement is used to stop executing JavaScript code?",
+                options: [
+                    "break",
+                    "continue",
+                    "return",
+                    "stop",
+                ],
+                correct: 2,
+            },
+            {
+                question: "What will the following code output?<br><code>console.log(typeof []);</code>",
+                options: [
+                    "object",
+                    "array",
+                    "undefined",
+                    "string",
+                ],
+                correct: 0,
+            },
+            {
+                question: "In CSS, which property is used to change the color of text?",
+                options: [
+                    "color",
+                    "text-color",
+                    "font-color",
+                    "style-color",
+                ],
+                correct: 0,
+            },
+            {
+                question: "What will the following code output?<br><code>console.log(3 * 3);</code>",
+                options: [
+                    "6",
+                    "9",
+                    "12",
+                    "15",
+                ],
+                correct: 1,
+            }
+        ];
+
+        const pythonQuiz = [
+            {
+                question: "What is the correct syntax to output 'Hello World' in Python?",
+                options: [
+                    "print('Hello World')",
+                    "echo('Hello World')",
+                    "console.log('Hello World')",
+                    "System.out.println('Hello World')",
+                ],
+                correct: 0,
+            },
+            {
+                question: "Which of the following data types is not supported in Python?",
+                options: [
+                    "float",
+                    "decimal",
+                    "tuple",
+                    "char",
+                ],
+                correct: 3,
+            },
+            {
+                question: "How do you create a variable with the numeric value 5 in Python?",
+                options: [
+                    "num x = 5",
+                    "x = 5",
+                    "int x = 5",
+                    "float x = 5",
+                ],
+                correct: 1,
+            },
+            {
+                question: "What is the correct file extension for Python files?",
+                options: [
+                    ".pyt",
+                    ".pt",
+                    ".pyth",
+                    ".py",
+                ],
+                correct: 3,
+            },
+            {
+                question: "Which of the following is a correct way to comment in Python?",
+                options: [
+                    "// This is a comment",
+                    "# This is a comment",
+                    "<!-- This is a comment -->",
+                    "/* This is a comment */",
+                ],
+                correct: 1,
+            }
+        ];
+
+        const javaQuiz = [
+            {
+                question: "Which of the following is not a primitive data type in Java?",
+                options: [
+                    "int",
+                    "boolean",
+                    "char",
+                    "string",
+                ],
+                correct: 3,
+            },
+            {
+                question: "What is the correct way to create an object called myObj of MyClass in Java?",
+                options: [
+                    "MyClass myObj = new myObj();",
+                    "MyClass myObj = new myObj;",
+                    "MyClass myObj = new MyClass();",
+                    "new myObj = MyClass();",
+                ],
+                correct: 2,
+            },
+            {
+                question: "Which keyword is used to define the constant in Java?",
+                options: [
+                    "constant",
+                    "final",
+                    "const",
+                    "static",
+                ],
+                correct: 1,
+            },
+            {
+                question: "Which method must be implemented by all threads?",
+                options: [
+                    "run()",
+                    "start()",
+                    "execute()",
+                    "init()",
+                ],
+                correct: 0,
+            },
+            {
+                question: "Which of these access specifiers can be used for a class so that it can be accessed by any code in any package?",
+                options: [
+                    "public",
+                    "protected",
+                    "private",
+                    "none of the mentioned",
+                ],
+                correct: 0,
+            }
+        ];
+
+        const quizData = {
+            "html": htmlQuiz,
+            "python": pythonQuiz,
+            "java": javaQuiz
+        };
+
+        let currentQuiz = quizData.html; // default quiz
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let startTime;
+        let quickAnswerThreshold = 5; // seconds
+        let timerInterval;
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            startTime = new Date();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const questionObj = currentQuiz[currentQuestionIndex];
+            document.getElementById('question').innerHTML = questionObj.question;
+            const optionsList = document.getElementById('options');
+            optionsList.innerHTML = '';
+            questionObj.options.forEach((option, index) => {
+                const li = document.createElement('li');
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'option';
+                radio.value = index;
+                li.appendChild(radio);
+                li.appendChild(document.createTextNode(option));
+                optionsList.appendChild(li);
+            });
+            document.getElementById('submit').classList.remove('hidden');
+            document.getElementById('wowMessage').classList.add('hidden');
+            startTimer();
+        }
+
+        function startTimer() {
+            let timeRemaining = 15; // seconds for each question
+            document.getElementById('timer').textContent = `Time left: ${timeRemaining}s`;
+            clearInterval(timerInterval); // Clear any existing interval
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                document.getElementById('timer').textContent = `Time left: ${timeRemaining}s`;
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Time's up! Moving to the next question.");
+                    nextQuestion();
+                }
+            }, 1000);
+        }
+
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentQuiz.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('submit').addEventListener('click', function() {
+                const selectedOption = document.querySelector('input[name="option"]:checked');
+                if (!selectedOption) {
+                    alert('Please select an answer!');
+                    return;
+                }
+                clearInterval(timerInterval); // Stop the timer
+                const answer = parseInt(selectedOption.value);
+                const questionObj = currentQuiz[currentQuestionIndex];
+                if (answer === questionObj.correct) {
+                    const currentTime = new Date();
+                    const timeTaken = (currentTime - startTime) / 1000;
+                    score++;
+                    if (timeTaken <= quickAnswerThreshold) {
+                        document.getElementById('wowMessage').classList.remove('hidden');
+                    }
+                }
+                startTime = new Date();
+                nextQuestion();
+            });
+        });
+
+        function showResult() {
+            document.getElementById('quiz').classList.add('hidden');
+            document.getElementById('result').classList.remove('hidden');
+            document.getElementById('score').textContent = `Your score is ${score} out of ${currentQuiz.length}`;
+            const correctAnswersList = document.getElementById('correctAnswers');
+            correctAnswersList.innerHTML = '';
+            currentQuiz.forEach((question, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `${question.question}<br>Correct answer: ${question.options[question.correct]}`;
+                correctAnswersList.appendChild(li);
+            });
+            document.getElementById('nextLevelBtn').classList.remove('hidden');
+        }
+
+        function nextlevel() {
+            currentQuestionIndex = 0;
+            clearInterval(timerInterval); // Clear timer
+            if (currentQuiz === quizData.html) {
+                currentQuiz = quizData.python;
+            } else if (currentQuiz === quizData.python) {
+                currentQuiz = quizData.java;
+            } else {
+                alert("You've completed all quizzes!");
+                return;
+            }
+            score = 0;
+            showQuestion();
+            document.getElementById('quiz').classList.remove('hidden');
+            document.getElementById('result').classList.add('hidden');
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div id="registerForm" style="display: none;">
+            <h1>Register</h1>
+            <div class="form-group">
+                <input type="text" id="regName" placeholder="Name" required />
+            </div>
+            <div class="form-group">
+                <input type="email" id="regEmail" placeholder="Email" required />
+            </div>
+            <div class="form-group">
+                <input type="password" id="regPassword" placeholder="Password" required />
+            </div>
+            <button onclick="register()">Register</button>
+            <div class="switch">
+                <span>Already have an account? <a href="#" onclick="switchToLogin()">Login</a></span>
+            </div>
+        </div>
+
+        <div id="loginForm">
+            <h1>Login</h1>
+            <div class="form-group">
+                <input type="email" id="loginEmail" placeholder="Email" required />
+            </div>
+            <div class="form-group">
+                <input type="password" id="loginPassword" placeholder="Password" required />
+            </div>
+            <button onclick="login()">Login</button>
+            <div class="switch">
+                <span>Don't have an account? <a href="#" onclick="switchToRegister()">Register</a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="quiz-container">
+        <div id="quiz">
+            <div id="timer" class="timer"></div>
+            <div id="question" class="question"></div>
+            <hr>
+            <ol id="options" class="options"></ol>
+            <div id="wowMessage" class="hidden wow-message">Wow! Quick answer!</div>
+            <button id="submit" class="hidden">Submit</button>
+        </div>
+        <div id="result" class="hidden">
+            <h2>Quiz Completed!</h2>
+            <p id="score"></p>
+            <ul id="correctAnswers"></ul>
+            <button id="nextLevelBtn" class="hidden" onclick=nextlevel()>Next Level</button>
+        </div>
+    </div>
+</body>
+</html>
